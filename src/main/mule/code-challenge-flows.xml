@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="ffb11a7b-2770-4213-b646-67f20c815199" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a52a6243-2691-451b-bb1c-c5fba1da60f6" >
+		<http:request-connection host="localhost" port="8081" />
+	</http:request-config>
+	<flow name="code-challenge-Q-2" doc:id="386cdf5a-4de5-4172-84c7-de98aa7d1ddf" >
+		<http:listener doc:name="Q 2" doc:id="14566e8d-241f-43fb-9a14-12a4d6379f91" config-ref="HTTP_Listener_config" path="/Q2"/>
+		<http:request method="POST" doc:name="get employee" doc:id="dfe23daa-8551-4c16-aef4-cc842f8ec615" config-ref="HTTP_Request_configuration" path="/employee" outputMimeType="application/json">
+			<http:body ><![CDATA[#[output application/json
+---
+{
+  "employee": {
+    "id": "A007",
+    "first_name": "Jan",
+    "last_name": "Doe"
+  }
+}]]]></http:body>
+		</http:request>
+	</flow>
+	<flow name="code-challenge-Q-3" doc:id="d410c7cd-101f-49e5-aa49-ce33c0a7dae7" >
+		<http:listener doc:name="Q 3" doc:id="dbcf1fad-2659-4cd1-940d-7d6bf9e0c08b" config-ref="HTTP_Listener_config" path="/Q3"/>
+		<http:request method="POST" doc:name="get employee" doc:id="56d454f9-7050-499f-b88d-7fa1be44d06c" config-ref="HTTP_Request_configuration" path="/employee" outputMimeType="application/json">
+			<http:body><![CDATA[#[output application/json
+---
+{
+  "employee": {
+    "id": "A007",
+    "first_name": "Jan",
+    "last_name": "Doe"
+  }
+}]]]></http:body>
+		</http:request>
+		<ee:transform doc:name="call java function" doc:id="93f872c8-a8fb-4381-a8f2-5c7093b5227b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import java!com::test::MyClass
+output application/json
+---
+MyClass::camelize(payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="code-challenge-Q-4.1" doc:id="8aab1678-6481-4bd0-8305-3a3719621602" >
+		<http:listener doc:name="Q 4.1" doc:id="b1bc1144-5283-4087-b83f-791277b6bbcf" config-ref="HTTP_Listener_config" path="/Q4.1"/>
+		<ee:transform doc:name="response-output-Q-4.1" doc:id="6c6845ab-ad04-480f-bad0-4fe3ab48fd2f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Arrays
+output application/json
+
+var input1 = readUrl("classpath://samples/input1.json", "application/json")
+var input2 = readUrl("classpath://samples/input2.json", "application/json")
+
+var joinedPayload = join(input1.employee, input2.scoreBoard, (employees) -> employees.id, (scoreBoards) -> scoreBoards.id)
+var zippedPayload = (zip(joinedPayload[0].r.subjects, joinedPayload[0].r.score))
+---
+
+certificate: joinedPayload map ((item, index) -> {
+    id: item.l.id,
+    firstName: item.l.first_name,
+    lastName: item.l.last_name,
+    MarksBySubjectWise: (joinedPayload[0].r.subjects map ((item, index) -> {
+        (item): joinedPayload[0].r.score[index]
+    })) reduce ((item, accumulator) -> item ++ accumulator)
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="code-challenge-Q-4.2" doc:id="65415af5-29af-4fc3-821e-b0c45efa74d3" >
+		<http:listener doc:name="Q 4.2" doc:id="2619d86b-22a0-4e90-8cec-c6528c97f7d5" config-ref="HTTP_Listener_config" path="/Q4.2"/>
+		<ee:transform doc:name="response-output-Q-4.2" doc:id="a5727545-2d2e-43b2-9c3f-5a5c147bbe60" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Arrays
+output application/json
+
+var input1 = readUrl("classpath://samples/input1.json", "application/json")
+var input2 = readUrl("classpath://samples/input2.json", "application/json")
+---
+leftJoin(input1.employee, input2.scoreBoard, (employees) -> employees.id, (scoreBoards) -> scoreBoards.id)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="code-challenge-Q-5" doc:id="83620704-706c-4934-8368-66a34d8fe8e0" >
+		<http:listener doc:name="Q 5" doc:id="09056d8f-b079-4f5d-a923-df66bfee840e" config-ref="HTTP_Listener_config" path="/Q5/{num}"/>
+		<set-payload value="#[output application/json
+---
+(1 to attributes.uriParams.num as Number)]" doc:name="send response" doc:id="1d9390e2-9bf7-4312-996d-349d67d06464" />
+	</flow>
+</mule>

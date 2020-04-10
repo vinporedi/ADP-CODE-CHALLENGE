@@ -1,0 +1,22 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/3519e2cf-ed24-4b33-9689-a76a1d978344/ # 
+title: code-challenge-api
+version: 1.0
+
+documentation:
+  - !include documentation/documentation.raml
+
+/employee:
+  post:
+    description: Return Employee info
+    body:
+      application/json:
+        example: !include examples/example.raml
+    responses:
+      201:
+        description: Getting response on success
+        body:
+          application/json:
+            example:
+              "Jan Doe employee profile is created in HRMS System"
+      
